@@ -26,6 +26,13 @@
 # nginx_http_accept_enable (bool): Set to "NO" by default.
 #				Set to yes to check for accf_http kernel module
 #				on start-up and load if not loaded.
+# nginx_mac_portacl_enable (bool): Set to "NO" by default.
+#				Set to yes to allow non-privileged nginx process to bind
+#				to ports below 1024.
+# nginx_mac_portacl_rules (bool): Set to "uid:$nginx_user:tcp:80,uid:$nginx_user:tcp:443"
+#				by default to allow non-privileged nginx process to bind
+#				to ports 80/tcp and 443/tcp.
+
 
 . /etc/rc.subr
 
@@ -51,8 +58,12 @@ extra_commands="reload configtest upgrade gracefulstop"
 [ -z "$nginxlimits_args" ]	&& nginxlimits_args="-e -U %%WWWOWN%%"
 [ -z "$nginx_http_accept_enable" ] && nginx_http_accept_enable="NO"
 [ -z "$nginx_reload_quiet" ]	&& nginx_reload_quiet="NO"
+[ -z "$nginx_mac_portacl_enable" ] && nginx_mac_portacl_enable="NO"
+[ -z "$nginx_mac_portacl_rules" ] && nginx_mac_portacl_rules="uid:$nginx_user:tcp:80,uid:$nginx_user:tcp:443"
 
 load_rc_config $name
+
+su_cmd="/usr/bin/su"
 
 if [ -n "$2" ]; then
 	profile="$2"
@@ -130,6 +141,42 @@ nginx_upgrade()
 	sig_reload="QUIT"
 	pidfile="$pidfile.oldbin"
 	run_rc_command ${rc_prefix}reload $rc_extra_args || return 1
+}
+
+nginx_mac_portacl()
+{
+	local reservedlow reservedhigh rules_current
+
+	required_modules="$required_modules mac_portacl"
+	rules_current=$(sysctl -n security.mac.portacl.rules)
+	if [ ! $rules_current = "" ]; then
+		if ! echo $rules_current | grep "$nginx_mac_portacl_rules" >/dev/null 2>&1 ; then
+			rules_current="${rules_current},${nginx_mac_portacl_rules}"
+			if ! sysctl security.mac.portacl.rules="$rules_current" >/dev/null 2>&1 ; then
+				warn "Could not insert nginx_mac_portacl rules."
+				return 1
+			fi
+		fi
+	elif ! sysctl security.mac.portacl.rules=$nginx_mac_portacl_rules >/dev/null 2>&1 ; then
+		warn "Could not insert nginx_mac_portacl rules."
+		return 1
+	fi
+
+	# Check and disable net.inet.ip.portrange.* control
+	reservedlow=$(sysctl -n net.inet.ip.portrange.reservedlow)
+	reservedhigh=$(sysctl -n net.inet.ip.portrange.reservedhigh)
+	if [ ! $reservedlow -eq 0 ]; then
+		if ! sysctl net.inet.ip.portrange.reservedlow=0 >/dev/null 2>&1 ; then
+			warn "Could not change net.inet.ip.portrange.reservedlow."
+			return 1
+		fi
+	fi
+	if [ ! $reservedhigh -eq 0 ]; then
+		if ! sysctl net.inet.ip.portrange.reservedhigh=0 >/dev/null 2>&1 ; then
+			warn "Could not change net.inet.ip.portrange.reservedhigh."
+			return 1
+		fi
+	fi
 }
 
 nginx_precmd() 
