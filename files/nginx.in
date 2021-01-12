@@ -115,15 +115,18 @@ nginx_checktmpdir()
 
 nginx_checkpiddir()
 {
-	install -d -o %%WWWOWN%% -g %%WWWGRP%% -m 755 ${_pidprefix} \
-	&& chown -R %%WWWOWN%%:%%WWWGRP%% ${_pidprefix}
+	install -d -o %%WWWOWN%% -g %%WWWGRP%% -m 755 ${_pidprefix}
+	[ -f ${pidfile} ] && chown %%WWWOWN%%:%%WWWGRP%% ${pidfile}
 }
 
 nginx_checklogdir()
 {
 	_logprefix="/var/log/${name}"
-	install -d -o %%WWWOWN%% -g %%WWWGRP%% -m 755 ${_logprefix} \
-	&& chown -R %%WWWOWN%%:%%WWWGRP%% ${_logprefix}
+	install -d -o %%WWWOWN%% -g %%WWWGRP%% -m 755 ${_logprefix}
+	for f in access error ; do
+		[ ! -f ${_logprefix}/${f}.log ] && touch ${_logprefix}/${f}.log
+		[ ! -L ${_logprefix}/${f}.log ] && chown %%WWWOWN%%:%%WWWGRP%% ${_logprefix}/${f}.log
+	done
 }
 
 nginx_checkconfig()
