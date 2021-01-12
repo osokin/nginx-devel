@@ -177,7 +177,7 @@ nginx_upgrade()
 
 nginx_mac_portacl()
 {
-	local reservedlow reservedhigh rules_current
+	local reservedlow reservedhigh rules_current suser_exempt
 
 	required_modules="$required_modules mac_portacl"
 	if ! kldstat -m mac_portacl >/dev/null 2>&1 ; then
