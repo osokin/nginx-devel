@@ -213,6 +213,15 @@ nginx_mac_portacl()
 			return 1
 		fi
 	fi
+
+	# Check and prevent the root user from being affected by this policy
+	suexec_exempt=$(sysctl security.mac.portacl.suser_exempt)
+	if [ ! suexec_exempt -lt 1 ]; then
+		if ! sysctl security.mac.portacl.suser_exempt=1 >/dev/null 2>&1 ; then
+			warn "Could not set security.mac.portacl.suser_exempt."
+			return 1
+		fi
+	fi
 }
 
 nginx_precmd() 
