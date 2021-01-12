@@ -177,6 +177,13 @@ nginx_mac_portacl()
 	local reservedlow reservedhigh rules_current
 
 	required_modules="$required_modules mac_portacl"
+	if ! kldstat -m mac_portacl >/dev/null 2>&1 ; then
+		if ! kldload mac_portacl ; then
+			warn "Could not load mac_portacl module."
+			return 1
+		fi
+	fi
+
 	rules_current=$(sysctl -n security.mac.portacl.rules)
 	if [ ! $rules_current = "" ]; then
 		if ! echo $rules_current | grep "$nginx_mac_portacl_rules" >/dev/null 2>&1 ; then
