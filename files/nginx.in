@@ -263,7 +263,8 @@ nginx_stop()
 
 nginx_reload()
 {
-	${pkill_cmd} -HUP -F ${pidfile}
+	[ $sig_reload = "" ] && sig_reload="HUP"
+	${pkill_cmd} "-$sig_reload" -F ${pidfile}
 }
 
 nginx_restart()
