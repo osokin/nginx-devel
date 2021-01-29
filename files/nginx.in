@@ -65,7 +65,6 @@ extra_commands="reload configtest upgrade gracefulstop"
 
 load_rc_config $name
 
-pkill_cmd="/bin/pkill"
 su_cmd="/usr/bin/su"
 
 if [ -n "$2" ]; then
