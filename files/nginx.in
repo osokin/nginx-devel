@@ -39,12 +39,9 @@
 name="nginx"
 rcvar=nginx_enable
 
-start_cmd="nginx_start"
-stop_cmd="nginx_stop"
+start_precmd="nginx_precmd"
 restart_precmd="nginx_checkconfig"
-restart_cmd="nginx_restart"
 reload_precmd="nginx_checkconfig"
-reload_cmd="nginx_reload"
 configtest_cmd="nginx_checkconfig"
 gracefulstop_cmd="nginx_gracefulstop"
 upgrade_precmd="nginx_checkconfig"
@@ -116,7 +113,7 @@ nginx_checktmpdir()
 nginx_checkpiddir()
 {
 	install -d -o %%WWWOWN%% -g %%WWWGRP%% -m 755 ${_pidprefix}
-	[ -f ${pidfile} ] && chown %%WWWOWN%%:%%WWWGRP%% ${pidfile}
+	install -o %%WWWOWN%% -g %%WWWGRP%% /dev/null ${pidfile}
 }
 
 nginx_checklogdir()
@@ -131,10 +128,6 @@ nginx_checklogdir()
 
 nginx_checkconfig()
 {
-	nginx_checktmpdir
-	nginx_checkpiddir
-	nginx_checklogdir
-
 	if checkyesno nginx_reload_quiet; then
 		if checkyesno nginx_mac_portacl_enable; then
 			${su_cmd} -m ${nginx_user} -c "${command} ${nginx_flags} -t -q"
@@ -244,33 +237,10 @@ nginx_precmd()
 	else
 		return 0
 	fi
-}
 
-nginx_start()
-{
-	nginx_precmd
-	if checkyesno nginx_mac_portacl_enable; then
-		${su_cmd} -m ${nginx_user} -c "${command} ${nginx_flags}"
-	else
-		eval ${command} ${nginx_flags}
-	fi
-}
-
-nginx_stop()
-{
-	${pkill_cmd} -TERM -F ${pidfile}
-}
-
-nginx_reload()
-{
-	[ $sig_reload = "" ] && sig_reload="HUP"
-	${pkill_cmd} "-$sig_reload" -F ${pidfile}
-}
-
-nginx_restart()
-{
-	nginx_stop
-	nginx_start
+	nginx_checktmpdir
+	nginx_checkpiddir
+	nginx_checklogdir
 }
 
 run_rc_command "$1"
