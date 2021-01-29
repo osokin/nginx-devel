@@ -229,6 +229,10 @@ nginx_precmd()
 		nginx_mac_portacl
 	fi
 
+	nginx_checktmpdir
+	nginx_checkpiddir
+	nginx_checklogdir
+
 	nginx_checkconfig
 
 	if checkyesno nginxlimits_enable; then
@@ -236,10 +240,6 @@ nginx_precmd()
 	else
 		return 0
 	fi
-
-	nginx_checktmpdir
-	nginx_checkpiddir
-	nginx_checklogdir
 }
 
 run_rc_command "$1"
