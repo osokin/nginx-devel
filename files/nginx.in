@@ -128,18 +128,10 @@ nginx_checklogdir()
 nginx_checkconfig()
 {
 	if checkyesno nginx_reload_quiet; then
-		if checkyesno nginx_mac_portacl_enable; then
-			${su_cmd} -m ${nginx_user} -c "${command} ${nginx_flags} -t -q"
-		else
-			eval ${command} ${nginx_flags} -t -q
-		fi
+		eval ${command} ${nginx_flags} -t -q
 	else
 		echo "Performing sanity check on nginx configuration:"
-		if checkyesno nginx_mac_portacl_enable; then
-			${su_cmd} -m ${nginx_user} -c "${command} ${nginx_flags} -t"
-		else
-			eval ${command} ${nginx_flags} -t
-		fi
+		eval ${command} ${nginx_flags} -t
 	fi
 }
 
