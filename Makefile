@@ -2,8 +2,7 @@
 # $FreeBSD: head/www/nginx-devel/Makefile 568105 2021-03-11 16:48:14Z osa $
 
 PORTNAME?=	nginx
-PORTVERSION=	1.19.8
-PORTREVISION=	1
+PORTVERSION=	1.19.9
 CATEGORIES=	www
 MASTER_SITES=	https://nginx.org/download/ \
 		LOCAL/osa
