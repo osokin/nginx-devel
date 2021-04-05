@@ -40,6 +40,7 @@ name="nginx"
 rcvar=nginx_enable
 
 start_precmd="nginx_precmd"
+#start_cmd="nginx_start"
 restart_precmd="nginx_checkconfig"
 reload_precmd="nginx_checkconfig"
 configtest_cmd="nginx_checkconfig"
@@ -54,8 +55,6 @@ required_files=%%PREFIX%%/etc/nginx/nginx.conf
 extra_commands="reload configtest upgrade gracefulstop"
 
 [ -z "$nginx_enable" ]		&& nginx_enable="NO"
-[ -z "$nginx_user" ]		&& nginx_user="%%WWWOWN%%"
-[ -z "$nginx_user_id" ]		&& nginx_user_id=$(id -u $nginx_user)
 [ -z "$nginxlimits_enable" ]	&& nginxlimits_enable="NO"
 [ -z "$nginxlimits_args" ]	&& nginxlimits_args="-e -U $nginx_user"
 [ -z "$nginx_http_accept_enable" ] && nginx_http_accept_enable="NO"
@@ -64,6 +63,11 @@ extra_commands="reload configtest upgrade gracefulstop"
 [ -z "$nginx_mac_portacl_rules" ] && nginx_mac_portacl_rules="uid:$nginx_user_id:tcp:80,uid:$nginx_user_id:tcp:443"
 
 load_rc_config $name
+
+if checkyesno nginx_mac_portacl_enable; then
+	eval nginx_user="%%WWWOWN%%"
+	eval nginx_user_id="\$(id -u $nginx_user)"
+fi
 
 su_cmd="/usr/bin/su"
 
@@ -233,5 +237,14 @@ nginx_precmd()
 		return 0
 	fi
 }
+
+#nginx_start()
+#{
+#	if checkyesno nginx_mac_portacl_enable; then
+#		${su_cmd} -m ${nginx_user} -c "${command} ${nginx_flags}"
+#	else
+#		eval ${command} ${nginx_flags}
+#	fi
+#}
 
 run_rc_command "$1"
